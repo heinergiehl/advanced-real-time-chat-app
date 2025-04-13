@@ -1,0 +1,33 @@
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+
+# Temporary coverage files
+coverage/
+*.lcov
+
+# Node modules (if any subprojects or dependencies get installed here)
+**/node_modules/
+
+# Bun specific folders
+# (Bun lockfile is typically committed, so do not ignore bun.lockb)
+.bun/         # if Bun creates a cache/build folder, ignore it
+
+# Nuxt 3 build and generated folders for the frontend
+fe/.nuxt/
+fe/dist/
+
+# Environment variable files (ensure sensitive data stays local)
+.env
+.env.*
+server/.env
+
+# Miscellaneous OS or editor-specific files
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  profile_image String?
+  password      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sentFriendRequests FriendRequest[] @relation("sentFriendRequests")
+
+  receivedFriendRequests FriendRequest[] @relation("receivedFriendRequests")
+
+  notifications Notification[]
+
+  chatParticipants ChatParticipant[]
+  chatmessages    ChatMessage[]
+}
+
+model FriendRequest {
+  id         Int                 @id @default(autoincrement())
+  sender     User                @relation("sentFriendRequests", fields: [senderId], references: [id])
+  senderId   Int
+  receiver   User                @relation("receivedFriendRequests", fields: [receiverId], references: [id])
+  receiverId Int
+  status     FriendRequestStatus @default(PENDING)
+
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Notification {
+  id      Int              @id @default(autoincrement())
+  user    User             @relation(fields: [userId], references: [id])
+  userId  Int
+  type    NotificationType
+  message String
+  read    Boolean          @default(false)
+
+  friendRequest   FriendRequest? @relation(fields: [friendRequestId], references: [id])
+  friendRequestId Int?
+  chatId          Int?
+  chat            Chat?          @relation(fields: [chatId], references: [id],onDelete: Cascade)
+  messageId   Int?
+  chatMessage ChatMessage? @relation(fields: [messageId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum ChatType {
+  ONE_ON_ONE
+  GROUP
+}
+
+model Chat {
+  id            Int               @id @default(autoincrement())
+  type          ChatType
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  participants  ChatParticipant[]
+  messages      ChatMessage[]
+  lastMessageId Int?
+  lastMessage   ChatMessage?      @relation("lastMessage", fields: [lastMessageId], references: [id])
+  notifications Notification[]
+}
+
+enum MessageType {
+  TEXT
+  GIF
+  IMAGE
+}
+
+model ChatMessageMedia {
+  id        Int         @id @default(autoincrement())
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId Int
+  mediaUrl  String
+  type      MessageType
+  createdAt DateTime    @default(now())
+}
+
+model ChatParticipant {
+  id       Int      @id @default(autoincrement())
+  user     User     @relation(fields: [userId], references: [id])
+  userId   Int
+  chat     Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId   Int
+  joinedAt DateTime @default(now())
+
+  @@unique([userId, chatId])
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId    Int
+  sender    User     @relation(fields: [senderId], references: [id])
+  senderId  Int
+  content   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Chat           Chat[]             @relation("lastMessage")
+  // Notification   Notification?      @relation(fields: [notificationId], references: [id])
+  // notificationId Int?
+  media          ChatMessageMedia[]
+
+  notifications Notification[]
+}
+
+enum NotificationType {
+  FRIEND_REQUEST
+  FRIEND_REQUEST_ACCEPTED
+  CHAT_CREATED // When a user is added to a chat
+  CHAT_MESSAGE
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
