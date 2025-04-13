@@ -24,7 +24,7 @@ fe/dist/
 
 # Environment variable files (ensure sensitive data stays local)
 .env
-.env.*
+
 server/.env
 
 # Miscellaneous OS or editor-specific files
